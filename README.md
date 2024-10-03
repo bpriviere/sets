@@ -37,11 +37,11 @@ make
 
 ## Scripts
 
-To make the rollout plot
+<!-- To make the rollout plot (fig 5a/b)
 ```
 cd ~/scripts/
 python rollout.py
-```
+``` -->
 
 
 To make the value convergence plot (fig 5c)
@@ -55,6 +55,19 @@ python value_convergence.py
 cd ~/scripts/
 python value_convergence.py
 ``` -->
+
+
+## Notes
+
+- Because SETS is an anytime algorithm with a wall-clock timeout condition, the results will depend on your machine. We use XX. 
+
+- To run value and policy convergence scripts at their highest level of resolution, you will need a large RAM (>32GB) to store the tree data structure in memory. 
+
+
+
+## Computer Specs 
+
+<todo>
 
 
 ## License

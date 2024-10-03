@@ -13,9 +13,9 @@ from matplotlib.gridspec import GridSpec
 # custom
 import plotter 
 from util import util 
-from build.bindings import get_mdp, get_dots_mdp, get_uct, RNG, UCT, MDP, SCP2, \
-    run_uct, run_scp2, Trajectory, rollout_action_sequence, wrapper_aero_model, Tree
-from learning.feedforward import Feedforward
+from build.bindings import get_mdp, get_dots_mdp, get_uct, RNG, UCT, MDP, \
+    run_uct, Trajectory, rollout_action_sequence, Tree
+# from learning.feedforward import Feedforward
 
 from rollout import rollout, extract_from_tree_statistics
 
@@ -42,7 +42,7 @@ def policy_convergence(process_count, config_dict, seed, N, parallel_on, initial
             max_frac_visit_counts_per_depth.append(max(visit_counts_per_depth[depth]) / total_visit_counts_per_depth[0])
         else:
             max_frac_visit_counts_per_depth.append(0)
-    print("max_frac_visit_counts_per_depth",max_frac_visit_counts_per_depth)
+    # print("max_frac_visit_counts_per_depth",max_frac_visit_counts_per_depth)
     policy_convergence_result = {
         "N": N, 
         "max_frac_visit_counts_per_depth" : max_frac_visit_counts_per_depth
@@ -143,10 +143,16 @@ def main():
     parallel_on = False
     only_plot = False
 
-    config_path = util.get_config_path("fixed_wing")
+    # config_path = util.get_config_path("fixed_wing")
+    # config_path = util.get_config_path("value_convergence")
+    config_path = util.get_config_path("policy_convergence")
 
-    Ns = [100, 1000, 10000]
-    # Ns = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000]
+    # Ns = [100, 1000, 10000]
+    # Ns = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000] # this is as far as I got on 64
+    # Ns = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000]
+    Ns = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000] # this is as far as I got on 32 gb
+    # Ns = [50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000] 
+    # Ns = [50, 100, 500, 1000, 5000, 10000, 50000] 
     # Ns = [50, 100, 500]
 
     if only_plot:
