@@ -25,7 +25,8 @@ set(CMAKE_CXX_FLAGS "-O2")
 
 # set(MOSEK_SOURCE_DIR ${MOSEK_HOME_DIR}/bin)
 # set(MOSEK_INCLUDE_DIR ${MOSEK_HOME_DIR}/h)
-set(ENV_DIR "~/anaconda3/envs/dots_env")
+# set(ENV_DIR "~/anaconda3/envs/dots_env")
+set(ENV_DIR "~/anaconda3/envs/sets")
 
 # add_subdirectory(pybind11)
 find_package(pybind11 REQUIRED)
@@ -57,7 +58,7 @@ find_library(yaml-cpp
     HINTS "${ENV_DIR}/lib"
     REQUIRED)
 
-list( APPEND CMAKE_BUILD_RPATH ${MOSEK_SOURCE_DIR} )
+# list( APPEND CMAKE_BUILD_RPATH ${MOSEK_SOURCE_DIR} )
 
 pybind11_add_module(bindings bindings.cpp)
 set_target_properties(${target} PROPERTIES CXX_VISIBILITY_PRESET "default")

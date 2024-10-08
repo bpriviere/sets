@@ -454,7 +454,11 @@ class SixDOFAircraft : public MDP {
                             throw std::logic_error("Thermal force vector is three - old config!");
                         } else if (m_Vs_thermal[ii].rows() == 6) { // thermal has forces and moments
                             f_thermal = R_ub.transpose() * m_Vs_thermal[ii].block(0,0,3,1);
+                            // std::cout << "before: "; 
+                            // print_v(aero);
                             aero.block(0,0,3,1) += f_thermal;
+                            // std::cout << "after: "; 
+                            // print_v(aero);
                             tau_thermal = m_Vs_thermal[ii].block(3,0,3,1);
                             aero.block(3,0,3,1) += tau_thermal;
                         } else {

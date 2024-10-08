@@ -7,11 +7,22 @@
  wind_mode: "thermal" # ["empty", "thermal"]
  reward_mode: "observation" # ["regulation", "observation"]
  target_special_idxs: [0]
- targets: [ [  500.0,  500.0, -350.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], ]
+ targets: [ [  450.0,  450.0, -350.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], ]
  ground_mdp_H: 60000 # 60 seconds = 10.0 min 
- # reward_parameters: [0.05, 0.9, 0.00025, 0.0, 0.1, 0.05, 1.0]
- reward_parameters: [0.0, 0.0, 0.0001, 0.9, 200, 0.1, 1.0]
- ground_mdp_V_alive: 0.0 # order of depth of tree search 
+ # reward parameters: 
+  # double weight_alive = m_reward_parameters[0];
+  # double weight_target = m_reward_parameters[1];
+  # double timescale_target = m_reward_parameters[2];
+  # double weight_energy = m_reward_parameters[3];
+  # double lengthscale_target = m_reward_parameters[4];
+  # double weight_angle = m_reward_parameters[5];
+  # double scale_angle = m_reward_parameters[6];
+ reward_parameters: [0.2, 0.6, 0.0001, 0.15, 200, 0.05, 1.0]
+ # reward_parameters: [0.2, 0.7, 0.0000005, 0.1, 200, 0.1, 1.0]
+ # reward_parameters: [0.3, 0.3, 0.0000005, 0.3, 200, 0.1, 1.0]
+ # reward_parameters: [0.3, 0.3, 0.0001, 0.3, 200, 0.1, 1.0]
+ # reward_parameters: [0.2, 0.0, 0.0000005, 0.8, 1, 0.0, 1.0]
+ ground_mdp_V_alive: 100 # order of depth of tree search 
  # aersonde
  # Table E1
  mass: 11.0 # kg
@@ -30,11 +41,10 @@
  ground_mdp_x0: [  -0.0, -0.0, -500.0, 30.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] 
  ground_mdp_xd: [   0.0, 0.0, -100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] 
  ground_mdp_X: [
-    # (px, py, pz)_[m], (vx, vy, vz)_[m/s], (roll, pitch, yaw)_[rad], (rollrate, pitchrate, yawrate)_[rad/s], time 
-   # -2000., -2000., -1000.2, 20.0, -20.0, -20.0, -2.0, -2.0, -1000.0, -50.0, -50.0, -50.0, 0.0,
-   #  2000.,  2000., -0.2,  50.0,  20.0,  20.0,  2.0,  2.0,  1000.0,  50.0,  50.0,  50.0, 100000000.0 ]
-   -1000., -1000., -1000.2, 20.0, -20.0, -20.0, -2.0, -2.0, -1000.0, -50.0, -50.0, -50.0, 0.0,
-    1000.,  1000., -0.2,  50.0,  20.0,  20.0,  2.0,  2.0,  1000.0,  50.0,  50.0,  50.0, 100000000.0 ]
+   -750., -750., -750.2, -600.0, -600.0, -600.0, -2.0, -2.0, -100.0, -50.0, -50.0, -50.0, 0.0,
+    750.,  750., -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  100.0,  50.0,  50.0,  50.0, 100000000.0 ]
+    # -1000., -1000., -1000.2, -600.0, -600.0, -600.0, -2.0, -2.0, -100.0, -50.0, -50.0, -50.0, 0.0,
+    # 1000.,  1000., -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  100.0,  50.0,  50.0,  50.0, 100000000.0 ]
  ground_mdp_special_obstacle_idxs: []
  ground_mdp_special_obstacle_radius: 0.8
  ground_mdp_obstacles: [ ]
@@ -49,19 +59,23 @@
  ground_mdp_Qu: [ 0.0, 0.0, 0.0, 1.0, 10000.0, 10000.0, 10000.0, 0.0]
  Xs_thermal: [
   [
-   -1000, -1000, -1000.2, -600.0, -600.0, -600.0, -2.0, -2.0, -10.0, -50.0, -50.0, -50.0, 0.0,
-   -250, -250, -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  10.0,  50.0,  50.0,  50.0, 100000000.0 
+   # -1000, -1000, -1000.2, -600.0, -600.0, -600.0, -2.0, -2.0, -10.0, -50.0, -50.0, -50.0, 0.0,
    # -250, -250, -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  10.0,  50.0,  50.0,  50.0, 100000000.0 
+   # -1000, -1000, -1000.2, -600.0, -600.0, -600.0, -2.0, -2.0, -1000.0, -50.0, -50.0, -50.0, 0.0,
+   #  1000,  1000, -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  1000.0,  50.0,  50.0,  50.0, 100000000.0 
+   -750, -750, -650.2, -600.0, -600.0, -600.0, -2.0, -2.0, -10.0, -50.0, -50.0, -50.0, 0.0,
+   -150, -150, -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  10.0,  50.0,  50.0,  50.0, 100000000.0 
+   # -1000, -1000, -1000.2, -600.0, -600.0, -600.0, -2.0, -2.0, -10.0, -50.0, -50.0, -50.0, 0.0,
+   # -250., -250., -0.2,  600.0,  600.0,  600.0,  2.0,  2.0,  10.0,  50.0,  50.0,  50.0, 100000000.0 
   ]
  ]
- Vs_thermal: [
-  [
-    # (fx, fy, fz)_[N], (tau_x, tau_y, tau_z)_[Nm]
-    0.0, 0.0, -100.0, 0.0, 0.0, 0.0
-  ]
- ]
+ # (fx, fy, fz)_[N], (tau_x, tau_y, tau_z)_[Nm]
+ Vs_thermal: [[ 0.0, 0.0, -100.0, 0.0, 0.0, 0.0 ] ]
  wind_duty_cycle: 1.0
  wind_period: 500
+ # Vs_thermal: [[ 0.0, 0.0, -100.0, 0.0, 0.0, 0.0 ] ]
+ # wind_duty_cycle: 0.5
+ # wind_period: 100
  #########
  rollout_mode: "uct-mpc" 
  #########
@@ -70,31 +84,45 @@
  dots_special_actions: ["empty"]
  dots_num_branches: 30
  dots_spectral_branches_mode: "my_idxs"
- my_idxs: [3,4,5,9,10,11]
+ # my_idxs: [3,4,5,9,10,11]
+ # my_idxs: [3,4]
+ my_idxs: [3,4]
+ # my_idxs: [3,4,5,9]
  dots_control_mode: "closed_loop_discrete"
+ # dots_control_mode: "open_loop"
  dots_scale_mode: "empty"
  dots_verbose: False
- dots_decision_making_horizon: 1000
- dots_dynamics_horizon: 25
+ dots_decision_making_horizon: 500
+ # dots_decision_making_horizon: 1000
+ dots_dynamics_horizon: 50
  dots_greedy_rate: 0.75 
  dots_greedy_min_dist: 0.15 
  # (px, py, pz, vx, vy, vz, roll pitch yaw, rollrate, pitchrate, yawrate, time)
  dots_modal_damping_mode: "damp_displacement_between_systems"
  dots_modal_damping_gains: [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75] 
+ # dots_modal_damping_gains: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] 
+ # dots_modal_damping_gains: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] 
  # dots_rho: 1.0 
  dots_rho: [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] 
+ # dots_rho: [ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] 
+ # dots_rho: [ 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01] 
+ # dots_rho: [ 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0] 
  dots_greedy_gain: 0.5 
  dots_baseline_mode_on: false
  dots_num_discrete_actions: 3
  #########
- uct_mode : "no_cbds"
- uct_downsample_traj_on : False
- uct_N : 1000
- uct_max_depth : 10
+ # uct_mode : "no_cbds"
+ uct_mode : "cbds"
+ uct_downsample_traj_on : True
+ # uct_downsample_traj : -1 # -1 is no downsampling 
+ uct_N : 10000
+ # uct_N : 10000
+ # uct_max_depth : 10
+ uct_max_depth : 50
  uct_mpc_depth : 2
  uct_c : 2.0
  uct_dt : 0.01 # sec
- uct_wct : 20.0 # sec
+ uct_wct : 10.0 # sec
  uct_export_topology : False
  uct_export_node_states : False
  # uct_export_trajs : True
@@ -109,6 +137,8 @@
  # 
  max_alpha: 0.33 # rad 
  max_beta:  0.33 # rad 
+ # max_alpha: 6.28 # rad 
+ # max_beta:  6.28 # rad 
  # linear aero model 
  rho: 1.268 # kg / m^3
  S: 0.55 # m^2, planform area of the wing surface
@@ -117,7 +147,7 @@
  # observation model 
  obs_cone_length: 150.0 # m 
  obs_cone_angle: 0.75 # pi/8, check units
- obs_min_speed: 2.0 # scale drag force 
+ obs_min_speed: 1.5 # scale drag force 
  # Table E2
  C_D_0: 0.043
  C_D_alpha: 0.03

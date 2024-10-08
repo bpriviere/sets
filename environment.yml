@@ -1,4 +1,4 @@
-name: dots_env
+name: sets
 channels:
   - mosek
   - defaults

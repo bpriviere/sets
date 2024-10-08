@@ -65,10 +65,5 @@ python value_convergence.py
 
 
 
-## Computer Specs 
-
-<todo>
-
-
 ## License
 XX

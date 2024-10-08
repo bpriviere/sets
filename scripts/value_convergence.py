@@ -431,7 +431,8 @@ def plot_glider_result(result):
                 # else:
                 #     plotter.render_xs_sixdofaircraft_game(uct_xs[0:time_idx,:], "GameSixDOFAircraft", config_dict, fig, ax, "blue", 0.5, view=view)
                 plotter.render_xs_sixdofaircraft_game(uct_xs, "GameSixDOFAircraft", config_dict, fig, ax, "blue", 1.0, view=view)
-                render_tree_glider(ground_mdp, trajs, config_dict, result["solver_param"], fig, ax, "black", 0.5)
+                # render_tree_glider(ground_mdp, trajs, config_dict, result["solver_param"], fig, ax, "black", 0.5)
+                render_tree_glider(ground_mdp, trajs, config_dict, result["solver_param"]["H"], fig, ax, "black", 0.5)
                 ax.set_xlim(xlim)
                 ax.set_ylim(ylim)
                 ax.set_zlim(zlim)
@@ -606,7 +607,15 @@ def sparsify_trajs(trajs, N_traj):
     return sparsified_trajs
 
 
-def render_tree_glider(mdp, trajs, config_dict, solver_param, fig, ax, color, alpha):
+def render_tree_glider(mdp, trajs, config_dict, branch_length, fig, ax, color, alpha):
+    if fig is None or ax is None:
+        fig, ax = plotter.make_3d_fig()
+        state_lims = np.array(config_dict["ground_mdp_X"])
+        state_lims = state_lims.reshape((state_lims.shape[0] // 2, 2), order="F")
+        ax.set_xlim(state_lims[0,:])
+        ax.set_ylim(state_lims[1,:])
+        ax.set_zlim([-1*state_lims[2,1], -1*state_lims[2,0]])
+
     # tree is list of trajectory objects 
 
     # trajs = sparsify_trajs(trajs, 1000)
@@ -614,19 +623,25 @@ def render_tree_glider(mdp, trajs, config_dict, solver_param, fig, ax, color, al
     nodesize = 1.0
     segments = []
 
-    if config_dict["uct_downsample_traj_on"]:
-        branch_length = 1
-    else:
-        branch_length = solver_param["dots_H"]
-
     for traj in trajs: 
-        xs = np.array(traj) # (H, n)
-        for kk in range(xs.shape[0] // branch_length - 1):
-            if not np.isnan(np.sum(np.sum(xs[kk*branch_length:(kk+1)*branch_length,:]))):
-                segments.append([
-                    [xs[kk*branch_length,0], xs[kk*branch_length,1], -1*xs[kk*branch_length,2]],
-                    [xs[(kk+1)*branch_length,0], xs[(kk+1)*branch_length,1], -1*xs[(kk+1)*branch_length,2]]
-                    ])
+
+        if config_dict["uct_downsample_traj_on"]:
+            xs = np.array(traj) # (treedepth, n) (if doesnt reach tree depth is nan)
+            for kk in range(xs.shape[0] - 1):
+                if not np.isnan(np.sum(xs[kk:kk+1,:])):
+                    segments.append([
+                        [xs[kk,0], xs[kk,1], -1*xs[kk,2]],
+                        [xs[(kk+1),0], xs[(kk+1),1], -1*xs[(kk+1),2]]
+                        ])
+
+        else:
+            xs = np.array(traj) # (H, n)
+            for kk in range(xs.shape[0] // branch_length - 1):
+                if not np.isnan(np.sum(np.sum(xs[kk*branch_length:(kk+1)*branch_length,:]))):
+                    segments.append([
+                        [xs[kk*branch_length,0], xs[kk*branch_length,1], -1*xs[kk*branch_length,2]],
+                        [xs[(kk+1)*branch_length,0], xs[(kk+1)*branch_length,1], -1*xs[(kk+1)*branch_length,2]]
+                        ])
 
     cmap = cm.get_cmap("viridis")
     colors = [cmap(ii / len(segments)) for ii in range(len(segments))]

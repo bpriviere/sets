@@ -72,6 +72,20 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
     # get uct 
     if config_dict["uct_mode"] == "cbds":
         uct = get_uct() 
+        # uct.set_param(
+        #     config_dict["uct_N"],         
+        #     config_dict["uct_max_depth"],         
+        #     config_dict["uct_wct"],         
+        #     config_dict["uct_c"],         
+        #     config_dict["uct_export_topology"],         
+        #     config_dict["uct_export_node_states"],         
+        #     config_dict["uct_export_trajs"],         
+        #     config_dict["uct_export_cbdsbds"],
+        #     config_dict["uct_export_tree_statistics"],
+        #     config_dict["uct_heuristic_mode"],         
+        #     config_dict["uct_tree_exploration"],         
+        #     config_dict["uct_verbose"],         
+        #     )
         uct.set_param(
             config_dict["uct_N"],         
             config_dict["uct_max_depth"],         
@@ -84,6 +98,7 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
             config_dict["uct_export_tree_statistics"],
             config_dict["uct_heuristic_mode"],         
             config_dict["uct_tree_exploration"],         
+            config_dict["uct_downsample_traj_on"],         
             config_dict["uct_verbose"],         
             )
     elif config_dict["uct_mode"] == "no_cbds":
@@ -111,8 +126,10 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
         initial_state = np.array(ground_mdp.initial_state())
     
     result = {
+        "config_name" : config_name,
         "config_dict" : config_dict,
         "config_path" : config_path,
+        "process_count" : process_count,
         "uct_trees" : [], 
         "uct_xss" : [], 
         "uct_uss" : [], 
@@ -127,7 +144,11 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
         "success" : False
     }
 
+    for trajs_fn in glob.glob(f"../data/test_{result['config_name']}_trajs_pc*_ii*"):
+        os.remove(trajs_fn)
+
     mode = config_dict["rollout_mode"]
+    ii_trajs = 0
     print("mode: ", mode)
 
     # run!
@@ -168,11 +189,17 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
     elif mode == "uct-mpc":
         
         curr_state = initial_state
-        mpc_horizon = config_dict["dots_decision_making_horizon"] * config_dict["uct_mpc_depth"]
+        if config_dict["uct_downsample_traj_on"]:
+            mpc_horizon = config_dict["uct_mpc_depth"]
+        else:
+            mpc_horizon = config_dict["dots_decision_making_horizon"] * config_dict["uct_mpc_depth"]
+
 
         while curr_state[ground_mdp.timestep_idx()] < ground_mdp.H():
 
+            empty_action = np.zeros((4,1))
             print("k/H: {}/{}, curr_state: {}".format(curr_state[ground_mdp.timestep_idx()], ground_mdp.H(), curr_state))
+            print("ground_mdp.R_verbose(curr_state, empty_action, True):", ground_mdp.R_verbose(curr_state, empty_action, True))
 
             # update environment 
             ground_mdp.clear_obstacles() 
@@ -208,8 +235,9 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
 
             curr_state = result["final_uct_xs"][-1]
 
-            if config_dict["uct_export_trajs"] and len(solver_result.tree.trajs) != 0:
-                trajs_cpp = solver_result.tree.trajs
+            if config_dict["uct_export_trajs"] and len(cpp_result_uct.tree.trajs) != 0:
+                from value_convergence import sparsify_trajs
+                trajs_cpp = cpp_result_uct.tree.trajs
                 # max_length = dots_H * tree_depth_H
                 max_length = max([len(traj.xs) for traj in trajs_cpp])
 
@@ -270,14 +298,18 @@ def print_result(result):
 
 def plot_result(result):
     
-    render_branchdatas_on = True 
-    plot_trajs_over_time_branchdata_on = True
-    render_result_on = True
-    plot_trajs_over_time_result_on = True
+    render_branchdatas_on = False 
+    plot_trajs_over_time_branchdata_on = False
+    plot_trajs_over_time_result_on = False
     second_plot_on = False
     max_num_branchdatas = 3
-    plot_tree_statistics = True
+    plot_tree_statistics = False
     plot_movie_on = False
+
+
+    render_result_on = True
+    plot_tree_trajs_on = True
+    plot_trajectory_on = True
 
     if render_branchdatas_on:
         print("render_branchdata...")
@@ -314,6 +346,41 @@ def plot_result(result):
 
     if plot_movie_on: 
         render_movie(result)
+
+    if plot_tree_trajs_on:
+        for trajs_fn in glob.glob(f"../data/test_{result['config_name']}_trajs_pc*_ii*"):
+            trajs = util.load_npy(trajs_fn)
+            from value_convergence import render_tree_glider
+            ground_mdp = get_mdp(result["config_dict"]["ground_mdp_name"], result["config_path"])
+            render_tree_glider(ground_mdp, trajs, result["config_dict"], 
+                result["config_dict"]["dots_decision_making_horizon"], None, None, "black", 0.5)
+
+    if plot_trajectory_on:
+        xs = result["rollout_xs"]
+        xs_np = np.array(xs) # (T, n)
+        us = result["rollout_us"]
+        us_np = np.array(us) # (T, m)
+
+        state_lims = np.array(result["config_dict"]["ground_mdp_X"])
+        state_lims = state_lims.reshape((state_lims.shape[0] // 2, 2), order="F")
+
+        control_lims = np.array(result["config_dict"]["ground_mdp_U"])
+        control_lims = control_lims.reshape((control_lims.shape[0] // 2, 2), order="F")
+
+        for ii, state_label in enumerate(result["config_dict"]["ground_mdp_state_labels"]):
+            fig, ax = plotter.make_fig()
+            ax.plot(xs_np[:,ii])
+            ax.set_title(state_label)
+            ax.set_ylim([state_lims[ii,0], state_lims[ii,1]])
+
+        for ii, control_label in enumerate(["delta_e", "delta_r", "delta_a"]):
+            fig, ax = plotter.make_fig()
+            ax.plot(us_np[:,ii])
+            ax.set_title(control_label)
+            ax.set_ylim([control_lims[ii,0], control_lims[ii,1]])
+
+
+
 
 def render_movie(result):
     xs = result["rollout_xs"]
@@ -454,7 +521,7 @@ def render_result(result):
                 return False
         return True
 
-    intervals = []
+    thermal_intervals = []
     thermals = [np.array(t).reshape((13,2), order="F") for t in result["config_dict"]["Xs_thermal"]]
     print("thermals",thermals)
     ii_start = None
@@ -474,7 +541,7 @@ def render_result(result):
             # if currently in thermal 
             if ii_start is not None: 
                 ii_end = kk 
-                intervals.append((ii_start, ii_end))
+                thermal_intervals.append((ii_start, ii_end))
                 ii_start = None 
             # if not currently in thermal 
             else:
@@ -482,37 +549,71 @@ def render_result(result):
     # if still in thermal 
     if ii_start is not None and any([in_cube(xs_np[-1,:], t) for t in thermals]):
         ii_end = xs_np.shape[0]-1
-        intervals.append((ii_start, ii_end))
+        thermal_intervals.append((ii_start, ii_end))
 
-    print("intervals",intervals)
-    for interval in intervals: 
+    print("thermal_intervals",thermal_intervals)
+    for interval in thermal_intervals: 
         ax.axvspan(interval[0], interval[1], alpha=0.5, color="orange")
 
+    # def in_vision_cone(state, target, config_dict):
+    #     obs_cone_angle = config_dict["obs_cone_angle"]
+    #     obs_cone_length = config_dict["obs_cone_length"]
+    #     dist = 
+    #     return abs(angle) < obs_cone_angle && dist < m_obs_cone_length;
 
     # reward intervals 
     ii_start = None
     ii_end = None
     rs_np = np.array(result["rollout_rs"])
+    # target = 
     reward_intervals = []
-    for kk in range(xs_np.shape[0]):
-        if rs_np[kk] > 0.5:
-            if ii_start is None:
-                ii_start = kk
-            else:
-                continue
-        else:
-            if ii_start is not None:
-                ii_end = kk 
-                reward_intervals.append((ii_start, ii_end))
-                ii_start = None
-            else:
-                continue
+    time_since_target_idx = -1
+    # for kk in range(xs_np.shape[0]):
+    #     if rs_np[kk] > 0.5:
+    #         if ii_start is None:
+    #             ii_start = kk
+    #         else:
+    #             continue
+    #     else:
+    #         if ii_start is not None:
+    #             ii_end = kk 
+    #             reward_intervals.append((ii_start, ii_end))
+    #             ii_start = None
+    #         else:
+    #             continue
 
+    if result["config_dict"]["uct_downsample_traj_on"]:
+        for kk in range(xs_np.shape[0]):
+            if xs_np[kk, time_since_target_idx] <= result["config_dict"]["dots_decision_making_horizon"]:
+                if ii_start is None:
+                    ii_start = kk
+                else:
+                    continue
+            else:
+                if ii_start is not None:
+                    ii_end = kk 
+                    reward_intervals.append((ii_start, ii_end))
+                    ii_start = None
+                else:
+                    continue
+    else:
+        raise ValueError("reward interval logic not implemented")
+
+    print("reward_intervals",reward_intervals)
     for interval in reward_intervals: 
         ax.axvspan(interval[0], interval[1], alpha=0.5, color="green")
     ax.plot(np.nan, np.nan, color="orange", alpha=0.5, label="Thermal")
     ax.plot(np.nan, np.nan, color="green", alpha=0.5, label="Observation")
     ax.legend()
+
+
+    time_idx = 12
+    fig, ax = plotter.make_fig()
+    ax.plot(xs_np[:, time_idx], xs_np[:, time_since_target_idx])
+    for interval in reward_intervals: 
+        ax.axvspan(xs_np[interval[0], time_idx], xs_np[interval[1], time_idx], alpha=0.5, color="green")
+    
+
     
 
 def plot_trajs_over_time_result(result):
