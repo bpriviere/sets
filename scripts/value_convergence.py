@@ -681,7 +681,7 @@ def main():
     run_sim_on = True
     max_num_workers = 4
     num_seeds = 2
-    parallel_on = True
+    parallel_on = False
     config_name = "value_convergence"
     config_path = util.get_config_path(config_name)
     config_dict = util.load_yaml(config_path)

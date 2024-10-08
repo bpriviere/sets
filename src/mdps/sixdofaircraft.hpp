@@ -7,7 +7,6 @@
 
 #include "mdp.hpp"
 #include "../util/util.hpp"
-#include "../learning/feedforward.hpp"
 
 
 class SixDOFAircraft : public MDP {
@@ -715,44 +714,8 @@ class SixDOFAircraft : public MDP {
             
             Eigen::Matrix<double,6,1> aero;
 
-            if (m_aero_mode == 3) {
-                Eigen::VectorXd input(state.size() - 1 + action.size());
-                input << state.head(m_state_dim-1), action;
-                aero = m_ff.eval(input);
-            } else if (m_aero_mode == 4) {
-                aero << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-                // check if in thermal, if so add thermal forces and moments with (x,y) offset by center distance
-                for (int ii=0; ii<m_Xs_thermal.size(); ii++) {
-                    if (is_vec_in_cube(state.head(3), m_Xs_thermal[ii].block(0,0,3,2))) {
-                        Eigen::VectorXd offset_state = state;
-                        offset_state(0,0) -= (m_Xs_thermal[ii](0,0) + m_Xs_thermal[ii](0,1)) / 2.0;
-                        offset_state(1,0) -= (m_Xs_thermal[ii](1,0) + m_Xs_thermal[ii](1,1)) / 2.0;
-                        Eigen::VectorXd input(offset_state.size() - 1 + 1 + action.size());
-                        input << offset_state.head(m_state_dim-1), 20.0, action;
-                        aero += m_ff.eval(input);
-                    }
-                }
-            } else if (m_aero_mode == 5) {
-                aero << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-                // check if in thermal, if so add thermal forces and moments with (x,y) offset by center distance
-                for (int ii=0; ii<m_Xs_thermal.size(); ii++) {
-                    if (is_vec_in_cube(state.head(3), m_Xs_thermal[ii].block(0,0,3,2))) {
-                        Eigen::VectorXd offset_state = state;
-                        offset_state(0,0) -= (m_Xs_thermal[ii](0,0) + m_Xs_thermal[ii](0,1)) / 2.0;
-                        offset_state(1,0) -= (m_Xs_thermal[ii](1,0) + m_Xs_thermal[ii](1,1)) / 2.0;
-                        Eigen::VectorXd input(offset_state.size() - 1 + action.size());
-                        // input << offset_state.head(m_state_dim-1), action;
-                        input << offset_state.head(3), Eigen::VectorXd::Zero(9), 0.294, 0.0, 0.0, 0.0;
-                        aero.tail(3) += m_neural_thermal_scale * m_ff.eval(input).tail(3);
-                        // std::cout << "input: " << input.transpose() << std::endl;
-                        // std::cout << "aero: " << aero.transpose() << std::endl;
-                        // Eigen::VectorXd check_input(16);
-                        // check_input << 0.0, 0.0, -2.0, Eigen::VectorXd::Zero(9), 0.294, 0.0, 0.0, 0.0;
-                        // std::cout << "check_input: " << check_input.transpose() << std::endl;
-                        // std::cout << "check aero: " << m_ff.eval(check_input).transpose() << std::endl;
-
-                    }
-                }
+            if (m_aero_mode == 3 || m_aero_mode == 4 || m_aero_mode == 5) {
+                int a; 
             } else if (m_aero_mode == 0) {
                 aero << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
             } else {
@@ -811,16 +774,6 @@ class SixDOFAircraft : public MDP {
             // print_v(aero);
 
             return aero; 
-        }
-
-        void set_weights(std::vector<Eigen::MatrixXd> weightss, std::vector<Eigen::MatrixXd> biass) override { 
-            m_ff.set_weights(weightss, biass); 
-        }
-
-        Eigen::VectorXd eval_ff(const Eigen::VectorXd & state, const Eigen::VectorXd & action) override {
-            Eigen::VectorXd input(m_state_dim - 1 + m_action_dim);
-            input << state.head(m_state_dim-1), action;
-            return m_ff.eval(input);
         }
 
         Eigen::MatrixXd rot_mat_body_to_inertial(double phi, double theta, double psi) {
@@ -1162,8 +1115,6 @@ class SixDOFAircraft : public MDP {
         // aero model
         Eigen::MatrixXd m_aero_clip;
         Eigen::VectorXd m_aero_scale;
-        // neural 
-        FeedForwardNetwork m_ff; 
         // nonlinear lift / drag
         double m_alpha_0;
         double m_M;
