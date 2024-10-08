@@ -145,7 +145,8 @@ def rollout(process_count, config_dict, seed, parallel_on, initial_state=None):
     }
 
     for trajs_fn in glob.glob(f"../data/test_{result['config_name']}_trajs_pc*_ii*"):
-        os.remove(trajs_fn)
+        if os.path.exists(trajs_fn):
+            os.remove(trajs_fn)
 
     mode = config_dict["rollout_mode"]
     ii_trajs = 0
@@ -308,7 +309,7 @@ def plot_result(result):
 
 
     render_result_on = True
-    plot_tree_trajs_on = True
+    plot_tree_trajs_on = False
     plot_trajectory_on = True
 
     if render_branchdatas_on:
@@ -886,15 +887,15 @@ def plot_trajs_over_time_branchdata(config_dict, tree):
         
 def main():
 
-    num_seeds = 1
-    parallel_on = False
+    num_seeds = 5
+    parallel_on = True
     only_plot = False
 
     # config_path = util.get_config_path("fixed_wing")
     config_path = util.get_config_path("rollout")
 
     if only_plot:
-        fns = glob.glob("../data/rollout_result_fixed_wing_0.pkl")
+        fns = glob.glob("../data/rollout_result_rollout_*.pkl")
         results = [util.load_pickle(fn) for fn in fns]
     else:
         start_time = timer.time()

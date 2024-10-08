@@ -189,15 +189,20 @@ class GameSixDOFAircraft : public MDP {
                 double time_since_seen_target_ii = state(ii+not_augmented_state_dim());
                 // this if condition handles the initialization of time_since_seen_target_ii=-100
                 // if (time_since_seen_target_ii > -0.1) {
-                if (true) {
-                    if (time_since_seen_target_ii > 0 && time_since_seen_target_ii*timescale_target < 1) {
-                        reward_target += 1.0 / m_targets.size();
-                    } else {
-                        double dist_to_target = (state.segment(0,3) - m_targets[ii].segment(0,3)).norm();
-                        reward_target += 0.5 / m_targets.size() * dist_to_reward(dist_to_target, lengthscale_target); 
-                        // reward_target += 0.0; 
-                    }
+                // if (true) {
+                //     if (time_since_seen_target_ii > 0 && time_since_seen_target_ii*timescale_target < 1) {
+                //         reward_target += 1.0 / m_targets.size();
+                //     } else {
+                //         double dist_to_target = (state.segment(0,3) - m_targets[ii].segment(0,3)).norm();
+                //         reward_target += 0.5 / m_targets.size() * dist_to_reward(dist_to_target, lengthscale_target); 
+                //         // reward_target += 0.0; 
+                //     }
+
+                if (time_since_seen_target_ii > 0) { 
+                    reward_target += 1.0 / m_targets.size() * std::exp(-1 * timescale_target  * time_since_seen_target_ii);
                 }
+                double dist_to_target = (state.segment(0,3) - m_targets[ii].segment(0,3)).norm();
+                reward_target += 0.1 / m_targets.size() * dist_to_reward(dist_to_target, lengthscale_target); 
             }
 
             double potential_energy = 11.0 * 9.8 * (-1 * state(2,0)); // m g h 
@@ -218,14 +223,14 @@ class GameSixDOFAircraft : public MDP {
                 weight_angle * reward_angle;
 
             if (verbose) {
-                std::cout << "reward_alive: " << reward_alive << std::endl;
-                std::cout << "reward_target: " << reward_target << std::endl;
-                std::cout << "reward_energy: " << reward_energy << std::endl;
-                std::cout << "reward_angle: " << reward_angle << std::endl;
-                std::cout << "potential_energy: " << potential_energy << std::endl;
-                std::cout << "kinetic_energy: " << kinetic_energy << std::endl;
-                std::cout << "total_energy: " << total_energy << std::endl;
-                std::cout << "max_total_energy: " << max_total_energy << std::endl;
+                std::cout << "weight_alive * reward_alive: " << weight_alive * reward_alive << std::endl;
+                std::cout << "weight_target * reward_target: " << weight_target * reward_target << std::endl;
+                std::cout << "weight_energy * reward_energy: " << weight_energy * reward_energy << std::endl;
+                std::cout << "weight_angle * reward_angle: " << weight_angle * reward_angle << std::endl;
+                // std::cout << "potential_energy: " << potential_energy << std::endl;
+                // std::cout << "kinetic_energy: " << kinetic_energy << std::endl;
+                // std::cout << "total_energy: " << total_energy << std::endl;
+                // std::cout << "max_total_energy: " << max_total_energy << std::endl;
                 std::cout << "reward: " << reward << std::endl;
             }
 

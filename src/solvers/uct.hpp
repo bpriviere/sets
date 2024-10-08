@@ -252,9 +252,12 @@ class UCT : public Solver {
                     
                     if (m_downsample_trajs) {
                         if (node->children[argmax]->traj.xs.size()>2) {
-                            node->children[argmax]->traj.xs.erase(node->children[argmax]->traj.xs.begin()+1, node->children[argmax]->traj.xs.end()-1);
-                            node->children[argmax]->traj.us.erase(node->children[argmax]->traj.us.begin()+1, node->children[argmax]->traj.us.end()-1);
-                            node->children[argmax]->traj.rs.erase(node->children[argmax]->traj.rs.begin()+1, node->children[argmax]->traj.rs.end()-1);
+                            // node->children[argmax]->traj.xs.erase(node->children[argmax]->traj.xs.begin()+1, node->children[argmax]->traj.xs.end()-1);
+                            // node->children[argmax]->traj.us.erase(node->children[argmax]->traj.us.begin()+1, node->children[argmax]->traj.us.end()-1);
+                            // node->children[argmax]->traj.rs.erase(node->children[argmax]->traj.rs.begin()+1, node->children[argmax]->traj.rs.end()-1);
+                            node->children[argmax]->traj.xs.erase(node->children[argmax]->traj.xs.begin(), node->children[argmax]->traj.xs.end()-1);
+                            node->children[argmax]->traj.us.erase(node->children[argmax]->traj.us.begin(), node->children[argmax]->traj.us.end()-1);
+                            node->children[argmax]->traj.rs.erase(node->children[argmax]->traj.rs.begin(), node->children[argmax]->traj.rs.end()-1);
                         }
                     }
                 }
